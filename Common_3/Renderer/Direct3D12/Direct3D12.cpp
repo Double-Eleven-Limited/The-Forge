@@ -32,16 +32,7 @@
 #define IID_ARGS IID_PPV_ARGS
 #endif
 
-// Pull in minimal Windows headers
-#if !defined(NOMINMAX)
-#define NOMINMAX
-#endif
-#if !defined(WIN32_LEAN_AND_MEAN)
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <Windows.h>
-
-#include "../IRenderer.h"
+#include "../Renderer.h"
 
 #define D3D12MA_IMPLEMENTATION
 #define D3D12MA_D3D12_HEADERS_ALREADY_INCLUDED
@@ -59,6 +50,9 @@
 #include <pix3.h>
 #else
 #include "../../ThirdParty/OpenSource/winpixeventruntime/Include/WinPixEventRuntime/pix3.h"
+#if defined(USE_PIX)
+#pragma comment(lib, "WinPixEventRuntime.lib")
+#endif
 #endif
 
 #include "../../ThirdParty/OpenSource/renderdoc/renderdoc_app.h"
@@ -79,6 +73,8 @@
 #if !defined(_WIN32)
 #error "Windows is needed!"
 #endif
+
+using namespace theforge;
 
 //
 // C++ is the only language supported by D3D12:
@@ -339,11 +335,11 @@ static void add_descriptor_heap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HE
 }
 
 /// Resets the CPU Handle to start of heap and clears all stored resource ids
-static void reset_descriptor_heap(DescriptorHeap* pHeap)
-{
-	pHeap->mUsedDescriptors = 0;
-	pHeap->mFreeList.clear();
-}
+//static void reset_descriptor_heap(DescriptorHeap* pHeap)
+//{
+//	pHeap->mUsedDescriptors = 0;
+//	pHeap->mFreeList.clear();
+//}
 
 static void remove_descriptor_heap(DescriptorHeap* pHeap)
 {
@@ -367,7 +363,7 @@ static DescriptorHeap::DescriptorHandle consume_descriptor_handles(DescriptorHea
 
 		if ((pHeap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
 		{
-			uint32_t currentOffset = pHeap->mUsedDescriptors;
+			//uint32_t currentOffset = pHeap->mUsedDescriptors;
 			D3D12_DESCRIPTOR_HEAP_DESC desc = pHeap->mDesc;
 			while(pHeap->mUsedDescriptors + descriptorCount > desc.NumDescriptors)
 				desc.NumDescriptors <<= 1;
@@ -415,7 +411,7 @@ void return_cpu_descriptor_handles(DescriptorHeap* pHeap, D3D12_CPU_DESCRIPTOR_H
 	for (uint32_t i = 0; i < count; ++i)
 		pHeap->mFreeList.push_back({
 		{ handle.ptr * pHeap->mDescriptorSize * i },
-		D3D12_GPU_VIRTUAL_ADDRESS_NULL });
+		{ D3D12_GPU_VIRTUAL_ADDRESS_NULL } });
 }
 
 static void copy_descriptor_handle(DescriptorHeap* pHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index)
@@ -1045,8 +1041,8 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE util_to_dx_primitive_topology_type(PrimitiveTopolo
 		case PRIMITIVE_TOPO_TRI_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		case PRIMITIVE_TOPO_TRI_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		case PRIMITIVE_TOPO_PATCH_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+		default: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 	}
-	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
 uint64_t util_dx_determine_storage_counter_offset(uint64_t buffer_size)
@@ -1698,6 +1694,8 @@ void initRenderer(const char* appName, const RendererDesc* pDesc, Renderer** ppR
 	ASSERT(pDesc);
 	ASSERT(ppRenderer);
 
+	Log::Init(appName);
+
 	Renderer* pRenderer = (Renderer*)tf_calloc_memalign(1, alignof(Renderer), sizeof(Renderer));
 	ASSERT(pRenderer);
 
@@ -2005,7 +2003,7 @@ void addQueue(Renderer* pRenderer, QueueDesc* pDesc, Queue** ppQueue)
 	CHECK_HRESULT(hook_create_command_queue(pRenderer->pDxDevice, &queueDesc, &pQueue->pDxQueue));
 
 	wchar_t queueTypeBuffer[32] = {};
-	wchar_t* queueType = NULL;
+	const wchar_t* queueType = NULL;
 	switch (queueDesc.Type)
 	{
 		case D3D12_COMMAND_LIST_TYPE_DIRECT: queueType = L"GRAPHICS QUEUE"; break;
@@ -2014,7 +2012,7 @@ void addQueue(Renderer* pRenderer, QueueDesc* pDesc, Queue** ppQueue)
 		default: break;
 	}
 
-	swprintf(queueTypeBuffer, L"%ls %u", queueType, pDesc->mNodeIndex);
+	swprintf(queueTypeBuffer, 32, L"%ls %u", queueType, pDesc->mNodeIndex);
 	pQueue->pDxQueue->SetName(queueTypeBuffer);
 
 	pQueue->mType = pDesc->mType;
@@ -2224,7 +2222,7 @@ void addSwapChain(Renderer* pRenderer, const SwapChainDesc* pDesc, SwapChain** p
 
 	IDXGISwapChain1* swapchain;
 
-	HWND hwnd = (HWND)pDesc->mWindowHandle.window;
+	HWND hwnd = (HWND)pDesc->mWindowHandle->window;
 
 	CHECK_HRESULT(pRenderer->pDXGIFactory->CreateSwapChainForHwnd(pDesc->ppPresentQueues[0]->pDxQueue, hwnd, &desc, NULL, NULL, &swapchain));
 
@@ -3234,16 +3232,16 @@ void compileShader(
 		wchar_t target[16] = {};
 		switch (stage)
 		{
-			case SHADER_STAGE_VERT: swprintf(target, L"vs_%d_%d", major, minor); break;
-			case SHADER_STAGE_TESC: swprintf(target, L"hs_%d_%d", major, minor); break;
-			case SHADER_STAGE_TESE: swprintf(target, L"ds_%d_%d", major, minor); break;
-			case SHADER_STAGE_GEOM: swprintf(target, L"gs_%d_%d", major, minor); break;
-			case SHADER_STAGE_FRAG: swprintf(target, L"ps_%d_%d", major, minor); break;
-			case SHADER_STAGE_COMP: swprintf(target, L"cs_%d_%d", major, minor); break;
+			case SHADER_STAGE_VERT: swprintf(target, 16, L"vs_%d_%d", major, minor); break;
+			case SHADER_STAGE_TESC: swprintf(target, 16, L"hs_%d_%d", major, minor); break;
+			case SHADER_STAGE_TESE: swprintf(target, 16, L"ds_%d_%d", major, minor); break;
+			case SHADER_STAGE_GEOM: swprintf(target, 16, L"gs_%d_%d", major, minor); break;
+			case SHADER_STAGE_FRAG: swprintf(target, 16, L"ps_%d_%d", major, minor); break;
+			case SHADER_STAGE_COMP: swprintf(target, 16, L"cs_%d_%d", major, minor); break;
 #ifdef ENABLE_RAYTRACING
 			case SHADER_STAGE_RAYTRACING:
 			{
-				swprintf(target, L"lib_%d_%d", major, minor);
+				swprintf(target, 16, L"lib_%d_%d", major, minor);
 				ASSERT(shaderTarget >= shader_target_6_3);
 				break;
 			}
@@ -3297,11 +3295,11 @@ void compileShader(
 		IDxcIncludeHandler* pInclude = NULL;
 		pLibrary->CreateIncludeHandler(&pInclude);
 
-		WCHAR* entryName = L"main";
+		const WCHAR* entryName = L"main";
 		if (pEntryPoint != NULL)
 		{
 			entryName = (WCHAR*)tf_calloc(strlen(pEntryPoint) + 1, sizeof(WCHAR));
-			mbstowcs(entryName, pEntryPoint, strlen(pEntryPoint));
+			mbstowcs((WCHAR*)entryName, pEntryPoint, strlen(pEntryPoint));
 		}
 
 		/************************************************************************/
@@ -3335,7 +3333,7 @@ void compileShader(
 
 		if (pEntryPoint != NULL)
 		{
-			tf_free(entryName);
+			tf_free((WCHAR*)entryName);
 			entryName = NULL;
 		}
 
@@ -3399,6 +3397,7 @@ void addShaderBinary(Renderer* pRenderer, const BinaryShaderDesc* pDesc, Shader*
 #ifdef ENABLE_RAYTRACING
 			case SHADER_STAGE_RAYTRACING: pStage = &pDesc->mComp; break;
 #endif
+			default: ASSERT(0); break;
 			}
 
 			totalSize += sizeof(ID3DBlob*);
@@ -3449,6 +3448,7 @@ void addShaderBinary(Renderer* pRenderer, const BinaryShaderDesc* pDesc, Shader*
 				}
 				break;
 #endif
+				default: ASSERT(0); break;
 				}
 			}
 
@@ -3498,7 +3498,7 @@ void addRootSignature(Renderer* pRenderer, const RootSignatureDesc* pRootSignatu
 	ASSERT(ppRootSignature);
 
 	static constexpr uint32_t                              kMaxLayoutCount = DESCRIPTOR_UPDATE_FREQ_COUNT;
-	UpdateFrequencyLayoutInfo                              layouts[kMaxLayoutCount] = {};
+	UpdateFrequencyLayoutInfo                              layouts[kMaxLayoutCount];
 	eastl::vector<ShaderResource>                          shaderResources;
 	eastl::vector<uint32_t>                                constantSizes;
 	eastl::vector<eastl::pair<ShaderResource*, Sampler*> > staticSamplers;
@@ -4343,7 +4343,7 @@ void cmdBindDescriptorSet(Cmd* pCmd, uint32_t index, DescriptorSet* pDescriptorS
 	ASSERT(pDescriptorSet);
 	ASSERT(index < pDescriptorSet->mMaxSets);
 
-	const DescriptorUpdateFrequency updateFreq = (DescriptorUpdateFrequency)pDescriptorSet->mUpdateFrequency;
+	//const DescriptorUpdateFrequency updateFreq = (DescriptorUpdateFrequency)pDescriptorSet->mUpdateFrequency;
 
 	// Set root signature if the current one differs from pRootSignature
 	reset_root_signature(pCmd, (PipelineType)pDescriptorSet->mPipelineType, pDescriptorSet->pRootSignatureHandle);
@@ -4668,7 +4668,7 @@ void addGraphicsPipeline(Renderer* pRenderer, const PipelineDesc* pMainDesc, Pip
 		psoRenderHash = tf_mem_hash<uint8_t>((uint8_t*)&pipeline_state_desc.SampleDesc, sizeof(DXGI_SAMPLE_DESC), psoRenderHash);
 		psoRenderHash = tf_mem_hash<uint8_t>((uint8_t*)&pipeline_state_desc.NodeMask, sizeof(UINT), psoRenderHash);
 
-		swprintf(pipelineName, L"%S_S%zuR%zu", (pMainDesc->pName ? pMainDesc->pName : "GRAPHICSPSO"), psoShaderHash, psoRenderHash);
+		swprintf(pipelineName, MAX_DEBUG_NAME_LENGTH + 32, L"%S_S%zuR%zu", (pMainDesc->pName ? pMainDesc->pName : "GRAPHICSPSO"), psoShaderHash, psoRenderHash);
 		result = psoCache->LoadGraphicsPipeline(pipelineName, &pipeline_state_desc, IID_ARGS(&pPipeline->pDxPipelineState));
 	}
 #endif
@@ -4761,7 +4761,7 @@ void addComputePipeline(Renderer* pRenderer, const PipelineDesc* pMainDesc, Pipe
 		size_t psoShaderHash = 0;
 		psoShaderHash = tf_mem_hash<uint8_t>((uint8_t*)CS.pShaderBytecode, CS.BytecodeLength, psoShaderHash);
 
-		swprintf(pipelineName, L"%S_S%zu", (pMainDesc->pName ? pMainDesc->pName : "COMPUTEPSO"), psoShaderHash);
+		swprintf(pipelineName, ARRAYSIZE(pipelineName), L"%S_S%zu", (pMainDesc->pName ? pMainDesc->pName : "COMPUTEPSO"), psoShaderHash);
 		result = psoCache->LoadComputePipeline(pipelineName, &pipeline_state_desc, IID_ARGS(&pPipeline->pDxPipelineState));
 	}
 #endif
@@ -5598,6 +5598,9 @@ void addIndirectCommandSignature(Renderer* pRenderer, const CommandSignatureDesc
 				argumentDescs[i].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
 				commandStride += sizeof(IndirectDispatchArguments);
 				break;
+			default:
+				ASSERT(0);
+				break;
 		}
 	}
 
@@ -5733,7 +5736,7 @@ void calculateMemoryStats(Renderer* pRenderer, char** stats)
 {
 	WCHAR* wstats = NULL;
 	pRenderer->pResourceAllocator->BuildStatsString(&wstats, TRUE);
-	size_t converted = 0;
+	//size_t converted = 0;
 	*stats = (char*)tf_malloc(wcslen(wstats) * sizeof(char));
 	wcstombs(*stats, wstats, wcslen(wstats));
 	pRenderer->pResourceAllocator->FreeStatsString(wstats);
@@ -6026,7 +6029,10 @@ void fillVirtualTexture(Cmd* pCmd, Texture* pTexture, Fence* pFence)
 			Src.PlacedFootprint =
 				D3D12_PLACED_SUBRESOURCE_FOOTPRINT{ 0,
 									{ Desc.Format,
-										(UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth, (UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 1, (UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth * sizeof(uint32_t) } };
+										(UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth,
+										(UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 
+										1, 
+										(UINT)(pTexture->pSvt->mSparseVirtualTexturePageWidth * sizeof(uint32_t)) } };
 
 			pCmd->pDxCmdList->CopyTextureRegion(&Dst, startCoord.X * (UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth, startCoord.Y * (UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 0, &Src, NULL);
 
@@ -6080,7 +6086,7 @@ void fillVirtualTextureLevel(Cmd* pCmd, Texture* pTexture, uint32_t mipLevel)
 		VirtualTexturePage* pPage = &(*pPageTable)[i];
 		uint32_t pageIndex = pPage->index;
 
-		int globalOffset = 0;
+		//int globalOffset = 0;
 
 		if ((pPage->mipLevel == mipLevel) && (pPage->pIntermediateBuffer == NULL))
 		{
@@ -6122,7 +6128,10 @@ void fillVirtualTextureLevel(Cmd* pCmd, Texture* pTexture, uint32_t mipLevel)
 				Src.PlacedFootprint =
 					D3D12_PLACED_SUBRESOURCE_FOOTPRINT{ 0,
 										{ Desc.Format,
-											(UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth, (UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 1, (UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth * sizeof(uint32_t) } };
+											(UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth, 
+											(UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 
+											1, 
+											(UINT)(pTexture->pSvt->mSparseVirtualTexturePageWidth * sizeof(uint32_t)) } };
 
 				pCmd->pDxCmdList->CopyTextureRegion(
 					&Dst, startCoord.X * (UINT)pTexture->pSvt->mSparseVirtualTexturePageWidth, startCoord.Y * (UINT)pTexture->pSvt->mSparseVirtualTexturePageHeight, 0, &Src, NULL);
@@ -6181,7 +6190,7 @@ void addVirtualTexture(Cmd* pCmd, const TextureDesc * pDesc, Texture ** ppTextur
 	//add to gpu
 	D3D12_RESOURCE_DESC desc = {};
 	DXGI_FORMAT         dxFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	DescriptorType      descriptors = pDesc->mDescriptors;
+	//DescriptorType      descriptors = pDesc->mDescriptors;
 
 	ASSERT(DXGI_FORMAT_UNKNOWN != dxFormat);
 
@@ -6272,7 +6281,8 @@ void addVirtualTexture(Cmd* pCmd, const TextureDesc * pDesc, Texture ** ppTextur
 						extent.Subresource = mipLevel;
 
 						// Add new virtual page
-						VirtualTexturePage *newPage = addPage(pRenderer, pTexture, offset, extent, (uint32_t)pTexture->pSvt->mSparseVirtualTexturePageWidth * (uint32_t)pTexture->pSvt->mSparseVirtualTexturePageHeight * sizeof(uint), mipLevel, layer);
+						//VirtualTexturePage *newPage = 
+							addPage(pRenderer, pTexture, offset, extent, (uint32_t)pTexture->pSvt->mSparseVirtualTexturePageWidth * (uint32_t)pTexture->pSvt->mSparseVirtualTexturePageHeight * sizeof(uint), mipLevel, layer);
 					}
 				}
 			}

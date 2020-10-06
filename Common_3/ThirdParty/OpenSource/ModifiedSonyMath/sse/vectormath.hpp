@@ -54,6 +54,11 @@
     #error "Define VECTORMATH_ALIGNED for your compiler or platform!"
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
+
 #include "internal.hpp"
 #include "floatinvec.hpp"
 #include "boolinvec.hpp"
@@ -3683,5 +3688,9 @@ inline void print(const UVector4 & vec, const char * name);
 #include "vector.hpp"
 #include "quaternion.hpp"
 #include "matrix.hpp"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif // VECTORMATH_SSE_VECTORMATH_HPP

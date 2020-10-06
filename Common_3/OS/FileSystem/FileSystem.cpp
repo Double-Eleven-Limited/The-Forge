@@ -260,7 +260,9 @@ static IFileSystem gMemoryFileIO =
 	MemoryStreamGetSeekPosition,
 	MemoryStreamGetSize,
 	MemoryStreamFlush,
-	MemoryStreamIsAtEnd
+	MemoryStreamIsAtEnd,
+	nullptr, // GetResourceMount
+	nullptr // pUser
 };
 
 static IFileSystem gSystemFileIO =
@@ -273,7 +275,9 @@ static IFileSystem gSystemFileIO =
 	FileStreamGetSeekPosition,
 	FileStreamGetSize,
 	FileStreamFlush,
-	FileStreamIsAtEnd
+	FileStreamIsAtEnd,
+	nullptr, // GetResourceMount
+	nullptr // pUser
 };
 
 IFileSystem* pSystemFileIO = &gSystemFileIO;
@@ -356,7 +360,7 @@ bool fsStreamAtEnd(const FileStream* pStream)
 /************************************************************************/
 // Platform independent filename, extension functions
 /************************************************************************/
-static inline FORGE_CONSTEXPR const char fsGetDirectorySeparator()
+static inline FORGE_CONSTEXPR char fsGetDirectorySeparator()
 {
 #if defined(_WIN32) || defined(_WINDOWS) ||  defined(XBOX)
 	return '\\';

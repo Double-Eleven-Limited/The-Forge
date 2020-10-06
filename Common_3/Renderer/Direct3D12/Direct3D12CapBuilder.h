@@ -12,7 +12,7 @@ inline void utils_caps_builder(Renderer* pRenderer)
 		DXGI_FORMAT fmt = (DXGI_FORMAT) TinyImageFormat_ToDXGI_FORMAT((TinyImageFormat)i);
 		if(fmt == DXGI_FORMAT_UNKNOWN) continue;
 
-		D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt };
+		D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
 
 		pRenderer->pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport));
 		pRenderer->pCapBits->canShaderReadFrom[i] = (formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE) != 0;

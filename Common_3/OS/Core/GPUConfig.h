@@ -39,15 +39,15 @@ static void fsReadFromStreamLine(FileStream* stream, char* pOutLine)
 
 inline GPUPresetLevel stringToPresetLevel(const char* presetLevel)
 {
-	if (!stricmp(presetLevel, "office"))
+	if (!_stricmp(presetLevel, "office"))
 		return GPU_PRESET_OFFICE;
-	if (!stricmp(presetLevel, "low"))
+	if (!_stricmp(presetLevel, "low"))
 		return GPU_PRESET_LOW;
-	if (!stricmp(presetLevel, "medium"))
+	if (!_stricmp(presetLevel, "medium"))
 		return GPU_PRESET_MEDIUM;
-	if (!stricmp(presetLevel, "high"))
+	if (!_stricmp(presetLevel, "high"))
 		return GPU_PRESET_HIGH;
-	if (!stricmp(presetLevel, "ultra"))
+	if (!_stricmp(presetLevel, "ultra"))
 		return GPU_PRESET_ULTRA;
 
 	return GPU_PRESET_NONE;
@@ -127,7 +127,7 @@ GPUPresetLevel getSinglePresetLevel(const char* line, const char* inVendorId, co
 		return GPU_PRESET_NONE;
 
 	//if we have a revision Id then we want to match it as well
-	if (stricmp(inRevId, "0x00") && strlen(revisionId) && stricmp(revisionId, "0x00") && stricmp(inRevId, revisionId))
+	if (_stricmp(inRevId, "0x00") && strlen(revisionId) && _stricmp(revisionId, "0x00") && _stricmp(inRevId, revisionId))
 		return GPU_PRESET_NONE;
 
 	return presetLevel;

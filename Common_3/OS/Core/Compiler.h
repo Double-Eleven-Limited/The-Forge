@@ -28,7 +28,9 @@
 #include <stdint.h>
 
 //For getting rid of unreferenced parameter warnings
-#ifdef _MSC_VER    //If on Visual Studio
+#ifdef __clang__
+#define UNREF_PARAM(x) ((void)(x))
+#elif defined(_MSC_VER)    //If on Visual Studio
 #define UNREF_PARAM(x) (x)
 #elif defined(ORBIS) || defined(PROSPERO)
 #define UNREF_PARAM(x) ((void)(x))

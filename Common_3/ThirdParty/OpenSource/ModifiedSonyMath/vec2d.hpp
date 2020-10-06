@@ -831,7 +831,7 @@ public:
 	
 	// true if x and y are equal
 	//
-	inline const bool operator == (const IVector2 &v) const;
+	inline bool operator == (const IVector2 &v) const;
 
 	// Construct x axis
 	//
@@ -992,7 +992,7 @@ inline const IVector2 IVector2::operator - () const
 	return IVector2(-mX, -mY);
 }
 
-inline const bool IVector2::operator == (const IVector2 &v)  const 
+inline bool IVector2::operator == (const IVector2 &v)  const 
 {
 	return (getX() == v.getX() && getY() == v.getY()); 
 }

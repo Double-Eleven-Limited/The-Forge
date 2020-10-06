@@ -23,7 +23,7 @@
 */
 
 #ifdef DIRECT3D12
-#include "../IRenderer.h"
+#include "../Renderer.h"
 #include "../../OS/Interfaces/ILog.h"
 
 #if defined(XBOX)

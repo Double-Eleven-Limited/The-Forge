@@ -41,8 +41,14 @@ typedef volatile ALIGNAS(PTR_SIZE) uintptr_t tfrg_atomicptr_t;
 	#include <windows.h>
 	#include <intrin.h>
 
+#ifdef __clang__
+	#include <atomic>
+	#define tfrg_memorybarrier_acquire() atomic_thread_fence(std::memory_order_acquire)
+	#define tfrg_memorybarrier_release() atomic_thread_fence(std::memory_order_release)
+#else
 	#define tfrg_memorybarrier_acquire() _ReadWriteBarrier()
 	#define tfrg_memorybarrier_release() _ReadWriteBarrier()
+#endif
 
 	#define tfrg_atomic32_load_relaxed(pVar) (*(pVar))
 	#define tfrg_atomic32_store_relaxed(dst, val) _InterlockedExchange( (volatile long*)(dst), val )

@@ -30,6 +30,8 @@
 
 #include "../Interfaces/IMemory.h"
 
+using namespace theforge;
+
 #define LOG_PREAMBLE_SIZE (56 + MAX_THREAD_NAME_LENGTH + FILENAME_NAME_LENGTH_LOG)
 #define LOG_LEVEL_SIZE 6
 #define LOG_MESSAGE_OFFSET (LOG_PREAMBLE_SIZE + LOG_LEVEL_SIZE)

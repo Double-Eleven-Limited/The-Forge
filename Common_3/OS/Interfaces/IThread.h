@@ -40,6 +40,8 @@ typedef unsigned long ThreadID;
 
 #define TIMEOUT_INFINITE UINT32_MAX
 
+namespace theforge {
+
 /// Operating system mutual exclusion primitive.
 struct Mutex
 {
@@ -141,5 +143,7 @@ struct Thread
 #ifdef _WIN32
 void sleep(unsigned mSec);
 #endif
+
+} // namespace theforge
 
 #endif

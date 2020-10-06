@@ -2928,7 +2928,7 @@ TIF_CONSTEXPR inline int8_t TinyImageFormat_LogicalChannelToPhysical(TinyImageFo
 	return TinyImageFormat_PC_CONST_0;
 }
 
-TIF_CONSTEXPR inline char const * const TinyImageFormat_Name(TinyImageFormat const fmt) {
+TIF_CONSTEXPR inline char const * TinyImageFormat_Name(TinyImageFormat const fmt) {
 	switch(fmt) {
 		case TinyImageFormat_UNDEFINED: return "UNDEFINED";
 		case TinyImageFormat_R1_UNORM: return "R1_UNORM";

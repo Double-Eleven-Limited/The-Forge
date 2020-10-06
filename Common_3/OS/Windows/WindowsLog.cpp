@@ -31,6 +31,8 @@
 #include "../Interfaces/ILog.h"
 #include "../Interfaces/IMemory.h"
 
+#pragma comment(lib, "user32")
+
 void _OutputDebugStringV(const char* str, va_list args)
 {
     const unsigned BUFFER_SIZE = 4096;

@@ -22,14 +22,14 @@
  * under the License.
 */
 
-#include "../IRenderer.h"
+#include "../Renderer.h"
 #include "Direct3D12Hooks.h"
 
 #include "../../OS/Interfaces/IMemory.h"
 
 HMODULE hook_get_d3d12_module_handle()
 {
-	return GetModuleHandle(TEXT("d3d12.dll"));
+	return GetModuleHandleA("d3d12.dll");
 }
 
 void hook_post_init_renderer(Renderer*)

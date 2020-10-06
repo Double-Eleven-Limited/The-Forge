@@ -35,7 +35,7 @@
 #define CGLTF_IMPLEMENTATION
 #include "../ThirdParty/OpenSource/cgltf/cgltf.h"
 
-#include "IRenderer.h"
+#include "Renderer.h"
 #include "IResourceLoader.h"
 #include "../OS/Interfaces/ILog.h"
 #include "../OS/Interfaces/IThread.h"
@@ -51,6 +51,8 @@
 #ifdef NX64
 #include "../ThirdParty/OpenSource/murmurhash3/MurmurHash3_32.h"
 #endif
+
+using namespace theforge;
 
 struct SubresourceDataDesc
 {
@@ -455,7 +457,7 @@ static MappedMemoryRange allocateUploadMemory(Renderer* pRenderer, uint64_t memo
 	bufferDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 	addBuffer(pRenderer, &bufferDesc, &buffer);
 #endif
-	return { (uint8_t*)buffer->pCpuMappedAddress, buffer, 0, memoryRequirement };
+	return { (uint8_t*)buffer->pCpuMappedAddress, buffer, 0, memoryRequirement, 0 };
 }
 
 static void setupCopyEngine(Renderer* pRenderer, CopyEngine* pCopyEngine, uint32_t nodeIndex, uint64_t size, uint32_t bufferCount)
@@ -606,7 +608,7 @@ static MappedMemoryRange allocateStagingMemory(uint64_t memoryRequirement, uint3
 		ASSERT(buffer->pCpuMappedAddress);
 		uint8_t* pDstData = (uint8_t*)buffer->pCpuMappedAddress + offset;
 		pCopyEngine->resourceSets[pResourceLoader->mNextSet].mAllocatedSpace = offset + memoryRequirement;
-		return { pDstData, buffer, offset, memoryRequirement };
+		return { pDstData, buffer, offset, memoryRequirement, 0 };
 	}
 	else
 	{
@@ -1044,7 +1046,7 @@ static UploadFunctionResult loadGeometry(Renderer* pRenderer, CopyEngine* pCopyE
 	fsGetPathExtension(pDesc->pFileName, iext);
 
 	// Geometry in gltf container
-	if (iext[0] != 0 && (stricmp(iext, "gltf") == 0 || stricmp(iext, "glb") == 0))
+	if (iext[0] != 0 && (_stricmp(iext, "gltf") == 0 || _stricmp(iext, "glb") == 0))
 	{
 		FileStream file = {};
 		if (!fsOpenStreamFromPath(RD_MESHES, pDesc->pFileName, FM_READ_BINARY, &file))
@@ -1421,7 +1423,7 @@ static UploadFunctionResult loadGeometry(Renderer* pRenderer, CopyEngine* pCopyE
 		}
 
 		// Load the tressfx specific data generated in the offline process
-		if (stricmp(data->asset.generator, "tressfx") == 0)
+		if (_stricmp(data->asset.generator, "tressfx") == 0)
 		{
 			// { "mVertexCountPerStrand" : "16", "mGuideCountPerStrand" : "3456" }
 			uint32_t extrasSize = (uint32_t)(data->asset.extras.end_offset - data->asset.extras.start_offset);
@@ -1758,7 +1760,7 @@ static void queueBufferBarrier(ResourceLoader* pLoader, Buffer* pBuffer, Resourc
 
 	SyncToken t = tfrg_atomic64_add_relaxed(&pLoader->mTokenCounter, 1) + 1;
 
-	pLoader->mRequestQueue[nodeIndex].emplace_back(UpdateRequest{ BufferBarrier{ pBuffer, RESOURCE_STATE_UNDEFINED, state } });
+	pLoader->mRequestQueue[nodeIndex].emplace_back(UpdateRequest{ BufferBarrier{ pBuffer, RESOURCE_STATE_UNDEFINED, state, false, false, false, false, QUEUE_TYPE_GRAPHICS } });
 	pLoader->mRequestQueue[nodeIndex].back().mWaitIndex = t;
 	pLoader->mQueueMutex.Release();
 	pLoader->mQueueCond.WakeOne();
@@ -1772,7 +1774,7 @@ static void queueTextureBarrier(ResourceLoader* pLoader, Texture* pTexture, Reso
 
 	SyncToken t = tfrg_atomic64_add_relaxed(&pLoader->mTokenCounter, 1) + 1;
 
-	pLoader->mRequestQueue[nodeIndex].emplace_back(UpdateRequest{ TextureBarrier{ pTexture, RESOURCE_STATE_UNDEFINED, state } });
+	pLoader->mRequestQueue[nodeIndex].emplace_back(UpdateRequest{ TextureBarrier{ pTexture, RESOURCE_STATE_UNDEFINED, state, false, false, false, false, QUEUE_TYPE_GRAPHICS } });
 	pLoader->mRequestQueue[nodeIndex].back().mWaitIndex = t;
 	pLoader->mQueueMutex.Release();
 	pLoader->mQueueCond.WakeOne();
@@ -1960,7 +1962,7 @@ void beginUpdateResource(BufferUpdateDesc* pBufferUpdate)
 			mapBuffer(pResourceLoader->pRenderer, pBuffer, NULL);
 		}
 
-		pBufferUpdate->mInternal.mMappedRange = { (uint8_t*)pBuffer->pCpuMappedAddress + pBufferUpdate->mDstOffset, pBuffer };
+		pBufferUpdate->mInternal.mMappedRange = { (uint8_t*)pBuffer->pCpuMappedAddress + pBufferUpdate->mDstOffset, pBuffer, 0, 0, 0 };
 		pBufferUpdate->pMappedData = pBufferUpdate->mInternal.mMappedRange.pData;
 		pBufferUpdate->mInternal.mMappedRange.mFlags = map ? MAPPED_RANGE_FLAG_UNMAP_BUFFER : 0;
 	}
@@ -2739,27 +2741,27 @@ bool find_shader_stage(const char* fileName, ShaderDesc* pDesc, ShaderStageDesc*
 {
 	char extension[FS_MAX_PATH] = {0};
 	fsGetPathExtension(fileName, extension);
-	if (stricmp(extension, "vert") == 0)
+	if (_stricmp(extension, "vert") == 0)
 	{
 		*pOutStage = &pDesc->mVert;
 		*pStage = SHADER_STAGE_VERT;
 	}
-	else if (stricmp(extension, "frag") == 0)
+	else if (_stricmp(extension, "frag") == 0)
 	{
 		*pOutStage = &pDesc->mFrag;
 		*pStage = SHADER_STAGE_FRAG;
 	}
-	else if (stricmp(extension, "comp") == 0)
+	else if (_stricmp(extension, "comp") == 0)
 	{
 		*pOutStage = &pDesc->mComp;
 		*pStage = SHADER_STAGE_COMP;
 	}
-	else if ((stricmp(extension, "rgen") == 0) ||
-		(stricmp(extension, "rmiss") == 0) ||
-		(stricmp(extension, "rchit") == 0) ||
-		(stricmp(extension, "rint") == 0) ||
-		(stricmp(extension, "rahit") == 0) ||
-		(stricmp(extension, "rcall") == 0))
+	else if ((_stricmp(extension, "rgen") == 0) ||
+		(_stricmp(extension, "rmiss") == 0) ||
+		(_stricmp(extension, "rchit") == 0) ||
+		(_stricmp(extension, "rint") == 0) ||
+		(_stricmp(extension, "rahit") == 0) ||
+		(_stricmp(extension, "rcall") == 0))
 	{
 		*pOutStage = &pDesc->mComp;
 		*pStage = SHADER_STAGE_COMP;
@@ -2775,44 +2777,44 @@ bool find_shader_stage(const char* fileName, ShaderDesc* pDesc, ShaderStageDesc*
 bool find_shader_stage(
 	const char* extension, BinaryShaderDesc* pBinaryDesc, BinaryShaderStageDesc** pOutStage, ShaderStage* pStage)
 {
-	if (stricmp(extension, "vert") == 0)
+	if (_stricmp(extension, "vert") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mVert;
 		*pStage = SHADER_STAGE_VERT;
 	}
-	else if (stricmp(extension, "frag") == 0)
+	else if (_stricmp(extension, "frag") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mFrag;
 		*pStage = SHADER_STAGE_FRAG;
 	}
 #ifndef METAL
-	else if (stricmp(extension, "tesc") == 0)
+	else if (_stricmp(extension, "tesc") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mHull;
 		*pStage = SHADER_STAGE_HULL;
 	}
-	else if (stricmp(extension, "tese") == 0)
+	else if (_stricmp(extension, "tese") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mDomain;
 		*pStage = SHADER_STAGE_DOMN;
 	}
-	else if (stricmp(extension, "geom") == 0)
+	else if (_stricmp(extension, "geom") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mGeom;
 		*pStage = SHADER_STAGE_GEOM;
 	}
 #endif
-	else if (stricmp(extension, "comp") == 0)
+	else if (_stricmp(extension, "comp") == 0)
 	{
 		*pOutStage = &pBinaryDesc->mComp;
 		*pStage = SHADER_STAGE_COMP;
 	}
-	else if ((stricmp(extension, "rgen") == 0) ||
-		(stricmp(extension, "rmiss") == 0) ||
-		(stricmp(extension, "rchit") == 0) ||
-		(stricmp(extension, "rint") == 0) ||
-		(stricmp(extension, "rahit") == 0) ||
-		(stricmp(extension, "rcall") == 0))
+	else if ((_stricmp(extension, "rgen") == 0) ||
+		(_stricmp(extension, "rmiss") == 0) ||
+		(_stricmp(extension, "rchit") == 0) ||
+		(_stricmp(extension, "rint") == 0) ||
+		(_stricmp(extension, "rahit") == 0) ||
+		(_stricmp(extension, "rcall") == 0))
 	{
 		*pOutStage = &pBinaryDesc->mComp;
 #ifndef METAL

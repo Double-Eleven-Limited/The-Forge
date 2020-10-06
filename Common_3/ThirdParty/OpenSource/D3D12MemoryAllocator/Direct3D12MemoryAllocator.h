@@ -5110,10 +5110,10 @@ namespace D3D12MA
 
 	void Pool::Release()
 	{
-		if (this == NULL)
-		{
-			return;
-		}
+		//if (this == NULL)
+		//{
+		//	return;
+		//}
 
 		D3D12MA_DEBUG_GLOBAL_MUTEX_LOCK
 
@@ -6381,10 +6381,10 @@ namespace D3D12MA
 
 	void Allocation::Release()
 	{
-		if (this == NULL)
-		{
-			return;
-		}
+		//if (this == NULL)
+		//{
+		//	return;
+		//}
 
 		D3D12MA_DEBUG_GLOBAL_MUTEX_LOCK
 
@@ -6400,6 +6400,8 @@ namespace D3D12MA
 			break;
 		case TYPE_HEAP:
 			m_Allocator->FreeHeapMemory(this);
+			break;
+		default:
 			break;
 		}
 

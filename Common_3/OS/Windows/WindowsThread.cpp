@@ -29,6 +29,8 @@
 #include "../Interfaces/ILog.h"
 #include "../Interfaces/IMemory.h"
 
+namespace theforge {
+
 bool Mutex::Init(uint32_t spinCount /* = kDefaultSpinCount */, const char* name /* = NULL */)
 {
 	return InitializeCriticalSectionAndSpinCount((CRITICAL_SECTION*)&mHandle, (DWORD)spinCount);
@@ -163,5 +165,7 @@ void sleep(uint32_t mSec)
 {
 	::Sleep((DWORD)mSec);
 }
+
+} // namespace theforge
 
 #endif

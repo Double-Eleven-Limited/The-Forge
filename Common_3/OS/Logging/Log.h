@@ -139,7 +139,7 @@ private:
 
 	eastl::vector<LogCallback> mCallbacks;
 	/// Mutex for threaded operation.
-	Mutex           mLogMutex;
+	theforge::Mutex mLogMutex;
 	uint32_t        mLogLevel;
 	uint32_t        mIndentation;
 	bool            mQuietMode;

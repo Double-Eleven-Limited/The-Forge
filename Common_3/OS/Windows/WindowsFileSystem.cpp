@@ -22,16 +22,26 @@
  * under the License.
 */
 
-#include <functional>
+#include "../Interfaces/IOperatingSystem.h"
 
 #if !defined(XBOX)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wunused-value"
+#endif
 #include "shlobj.h"
 #include "commdlg.h"
-#include <WinBase.h>
+#pragma comment(lib, "shell32")
+#pragma comment(lib, "ole32")
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
+#include <functional>
+
 #include "../Interfaces/ILog.h"
-#include "../Interfaces/IOperatingSystem.h"
 #include "../Interfaces/IThread.h"
 #include "../Interfaces/IMemory.h"
 
@@ -158,7 +168,7 @@ time_t fsGetLastModifiedTime(ResourceDirectory resourceDir, const char* fileName
 	//auto directoryPos = path.find(":");
 	//eastl::string cleanPath = path.substr(directoryPos - 1);
 
-	struct stat fileInfo = { 0 };
+	struct stat fileInfo = { };
 	stat(filePath, &fileInfo);
 	return fileInfo.st_mtime;
 }

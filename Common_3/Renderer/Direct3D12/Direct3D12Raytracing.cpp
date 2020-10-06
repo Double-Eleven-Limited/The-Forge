@@ -1,7 +1,9 @@
 #ifdef DIRECT3D12
 
+#include "../Renderer.h"
+
 // Socket is used in microprofile this header need to be included before d3d12 headers
-#include <WinSock2.h>
+//#include <WinSock2.h>
 
 #ifdef XBOX
 #include "../../../Xbox/Common_3/Renderer/Direct3D12/Direct3D12X.h"
@@ -18,7 +20,6 @@
 #include "../../ThirdParty/OpenSource/EASTL/sort.h"
 
 // Renderer
-#include "../IRenderer.h"
 #include "../IRay.h"
 #include "../IResourceLoader.h"
 #include "Direct3D12Hooks.h"
