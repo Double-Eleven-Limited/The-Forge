@@ -38,7 +38,7 @@
 // turn off loads of crap we don't use
 #define NOGDICAPMASKS			// - CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 #define NOMENUS					// - MF_*
-#define NOICONS					// - IDI_*
+//#define NOICONS					// - IDI_*
 #define NOKEYSTATES				// - MK_*
 #define NOSYSCOMMANDS			// - SC_*
 #define NORASTEROPS				// - Binary and Tertiary raster ops
@@ -58,7 +58,7 @@
 #define NOSERVICE				// - All Service Controller routines, SERVICE_ equates, etc.
 #define NOSOUND					// - Sound driver routines
 #define NOWH					// - SetWindowsHook and WH_*
-#define NOWINOFFSETS			// - GWL_*, GCL_*, associated routines
+//#define NOWINOFFSETS			// - GWL_*, GCL_*, associated routines
 #define NOCOMM					// - COMM driver routines
 #define NOKANJI					// - Kanji support stuff.
 #define NOHELP					// - Help engine interface.
@@ -67,9 +67,9 @@
 #define NOMCX					// - Modem Configuration Extensions
 
 //#define NOWINMESSAGES			// - WM_*, EM_*, LB_*, CB_*
-#define NOWINSTYLES			// - WS_*, CS_*, ES_*, LBS_*, SBS_*, CBS_*
-#define NOSYSMETRICS			// - SM_*
-#define NOSHOWWINDOW			// - SW_*
+//#define NOWINSTYLES			// - WS_*, CS_*, ES_*, LBS_*, SBS_*, CBS_*
+//#define NOSYSMETRICS			// - SM_*
+//#define NOSHOWWINDOW			// - SW_*
 //#define NOGDI					// - All GDI defines and routines
 //#define NOUSER				// - All USER defines and routines
 //#define NOMSG					// - typedef MSG and associated routines

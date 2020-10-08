@@ -32,6 +32,8 @@
 #endif
 #include "../Interfaces/IMemory.h"
 
+namespace theforge {
+
 Timer::Timer() { Reset(); }
 
 unsigned Timer::GetMSec(bool reset)
@@ -90,3 +92,5 @@ float HiresTimer::GetSeconds(bool reset) { return (float)(GetUSec(reset) / 1e6);
 float HiresTimer::GetSecondsAverage() { return (float)(GetUSecAverage() / 1e6); }
 
 void HiresTimer::Reset() { mStartTime = getUSec(); }
+
+} // namespace theforge

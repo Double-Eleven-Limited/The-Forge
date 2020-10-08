@@ -816,7 +816,8 @@ static UploadFunctionResult loadTexture(Renderer* pRenderer, CopyEngine* pCopyEn
 			return UPLOAD_FUNCTION_RESULT_INVALID_REQUEST;
 		}
 
-		fsAppendPathExtension(pTextureDesc->pFileName, extensions[container], fileName);
+		//fsAppendPathExtension(pTextureDesc->pFileName, extensions[container], fileName);
+		fsReplacePathExtension(pTextureDesc->pFileName, extensions[container], fileName);
 
 		switch (container)
 		{
@@ -2932,20 +2933,20 @@ void addShader(Renderer* pRenderer, const ShaderLoadDesc* pDesc, Shader** ppShad
 #endif
 #if !defined(PROSPERO)
 	if (binaryDesc.mStages & SHADER_STAGE_VERT)
-		tf_free(binaryDesc.mVert.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mVert.pByteCode));
 	if (binaryDesc.mStages & SHADER_STAGE_FRAG)
-		tf_free(binaryDesc.mFrag.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mFrag.pByteCode));
 	if (binaryDesc.mStages & SHADER_STAGE_COMP)
-		tf_free(binaryDesc.mComp.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mComp.pByteCode));
 #if !defined(METAL)
 	if (binaryDesc.mStages & SHADER_STAGE_TESC)
-		tf_free(binaryDesc.mHull.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mHull.pByteCode));
 	if (binaryDesc.mStages & SHADER_STAGE_TESE)
-		tf_free(binaryDesc.mDomain.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mDomain.pByteCode));
 	if (binaryDesc.mStages & SHADER_STAGE_GEOM)
-		tf_free(binaryDesc.mGeom.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mGeom.pByteCode));
 	if (binaryDesc.mStages & SHADER_STAGE_RAYTRACING)
-		tf_free(binaryDesc.mComp.pByteCode);
+		tf_free(const_cast<void*>(binaryDesc.mComp.pByteCode));
 #endif
 #endif
 #else
@@ -3053,3 +3054,11 @@ void savePipelineCache(Renderer* pRenderer, PipelineCache* pPipelineCache, Pipel
 }
 /************************************************************************/
 /************************************************************************/
+
+
+int getTextureWidth(Texture* pTexture) { return pTexture->mWidth; }
+int getTextureHeight(Texture* pTexture) { return pTexture->mHeight; }
+int getTextureDepth(Texture* pTexture) { return pTexture->mDepth; }
+int getTextureArraySize(Texture* pTexture) { return pTexture->mArraySizeMinusOne + 1; }
+int getTextureMipCount(Texture* pTexture) { return pTexture->mMipLevels; }
+TinyImageFormat getTextureFormat(Texture* pTexture) { return (TinyImageFormat)pTexture->mFormat; }

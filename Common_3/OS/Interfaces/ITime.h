@@ -26,6 +26,8 @@
 
 #include "stdint.h"
 
+namespace theforge {
+
 // High res timer functions
 int64_t getUSec();
 int64_t getTimerFrequency();
@@ -65,3 +67,5 @@ class HiresTimer
 	int64_t               mHistory[LENGTH_OF_HISTORY];
 	uint32_t              mHistoryIndex;
 };
+
+} // namespace theforge

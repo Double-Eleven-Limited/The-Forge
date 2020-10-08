@@ -1,6 +1,9 @@
+#include "../Interfaces/IOperatingSystem.h"
 #include <time.h>
 #include <stdint.h>
-#include <windows.h>
+#include <timeapi.h>
+
+namespace theforge {
 
 /************************************************************************/
 // Time Related Functions
@@ -45,3 +48,5 @@ int64_t getUSec()
 	QueryPerformanceCounter(&counter);
 	return counter.QuadPart * (int64_t)1e6 / getTimerFrequency();
 }
+
+} // namespace theforge

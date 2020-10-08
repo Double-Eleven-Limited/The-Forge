@@ -967,8 +967,8 @@ typedef struct BinaryShaderStageDesc
 	ProsperoBinaryShaderStageDesc mStruct;
 #else
 	/// Byte code array
-	void* pByteCode;
-	uint32_t                      mByteCodeSize;
+	const void* pByteCode;
+	uint32_t    mByteCodeSize;
 	const char* pEntryPoint;
 #if defined(METAL)
 	// Shader source is needed for reflection
@@ -1498,4 +1498,10 @@ API_INTERFACE void FORGE_CALLCONV setRenderTargetName(Renderer* pRenderer, Rende
 API_INTERFACE void FORGE_CALLCONV setPipelineName(Renderer* pRenderer, Pipeline* pPipeline, const char* pName);
 /************************************************************************/
 /************************************************************************/
+API_INTERFACE int FORGE_CALLCONV getTextureWidth(Texture* pTexture);
+API_INTERFACE int FORGE_CALLCONV getTextureHeight(Texture* pTexture);
+API_INTERFACE int FORGE_CALLCONV getTextureDepth(Texture* pTexture);
+API_INTERFACE int FORGE_CALLCONV getTextureArraySize(Texture* pTexture);
+API_INTERFACE int FORGE_CALLCONV getTextureMipCount(Texture* pTexture);
+API_INTERFACE TinyImageFormat FORGE_CALLCONV getTextureFormat(Texture* pTexture);
 // clang-format on

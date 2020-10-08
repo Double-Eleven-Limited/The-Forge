@@ -24,21 +24,32 @@
 
 #ifdef _WIN32
 
+#include "../Interfaces/IOperatingSystem.h"
+
 #include <ctime>
 #pragma comment(lib, "WinMM.lib")
 #include <windowsx.h>
-#include <ntverp.h>
+//#include <ntverp.h>
 
 #if !defined(XBOX)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#endif
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#pragma comment(lib, "gdi32")
+
 #endif
 
 #include "../../ThirdParty/OpenSource/EASTL/vector.h"
 #include "../../ThirdParty/OpenSource/EASTL/unordered_map.h"
 #include "../../ThirdParty/OpenSource/rmem/inc/rmem.h"
 
-#include "../Interfaces/IOperatingSystem.h"
 #include "../Interfaces/ILog.h"
 #include "../Interfaces/ITime.h"
 #include "../Interfaces/IThread.h"
@@ -58,6 +69,8 @@
 
 #define elementsOf(a) (sizeof(a) / sizeof((a)[0]))
 
+using namespace theforge;
+
 static IApp* pApp = nullptr;
 static bool gWindowClassInitialized = false;
 static WNDCLASSW gWindowClass;
@@ -74,10 +87,13 @@ static void onResize(WindowsDesc* wnd, int32_t newSizeX, int32_t newSizeY);
 
 static void UpdateWindowDescFullScreenRect(WindowsDesc* winDesc)
 {
-	HMONITOR  currentMonitor = MonitorFromWindow((HWND)pApp->pWindow->handle.window, MONITOR_DEFAULTTONEAREST);
+	//HMONITOR  currentMonitor = MonitorFromWindow((HWND)pApp->pWindow->handle.window, MONITOR_DEFAULTTONEAREST);
+	HMONITOR  currentMonitor = MonitorFromWindow((HWND)winDesc->handle.window, MONITOR_DEFAULTTONEAREST);
+
 	MONITORINFOEX info;
 	info.cbSize = sizeof(MONITORINFOEX);
-	bool infoRead = GetMonitorInfo(currentMonitor, &info);
+	//bool infoRead = 
+		GetMonitorInfo(currentMonitor, &info);
 
 	winDesc->fullscreenRect.left = info.rcMonitor.left;
 	winDesc->fullscreenRect.top = info.rcMonitor.top;
@@ -313,7 +329,7 @@ void collectMonitorInfo()
 	adapter.cb = sizeof(adapter);
 
 	int found = 0;
-	int size = 0;
+	//int size = 0;
 	uint32_t monitorCount = 0;
 
 	for (int adapterIndex = 0;; ++adapterIndex)
@@ -411,7 +427,8 @@ void collectMonitorInfo()
 
 			MONITORINFOEXW info;
 			info.cbSize = sizeof(MONITORINFOEXW);
-			bool infoRead = GetMonitorInfoW(currentMonitor, &info);
+			//bool infoRead = 
+			GetMonitorInfoW(currentMonitor, &info);
 			MonitorDesc desc = {};
 
 			wcsncpy_s(desc.adapterName, info.szDevice, elementsOf(info.szDevice));
@@ -495,7 +512,7 @@ void initWindowClass()
 {
 	if (!gWindowClassInitialized)
 	{
-		HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
+		HINSTANCE instance = (HINSTANCE)GetModuleHandleA(NULL);
 		memset(&gWindowClass, 0, sizeof(gWindowClass));
 		gWindowClass.style = 0;
 		gWindowClass.lpfnWndProc = WinProc;
@@ -588,7 +605,7 @@ void openWindow(const char* app_name, WindowsDesc* winDesc)
 		windowStyle,
 		windowX, windowY,
 		rect.right - windowX, rect.bottom - windowY,
-		NULL, NULL, (HINSTANCE)GetModuleHandle(NULL), 0);
+		NULL, NULL, (HINSTANCE)GetModuleHandleA(NULL), 0);
 
 	if (hwnd != NULL)
 	{
@@ -739,13 +756,18 @@ void adjustWindow(WindowsDesc* winDesc)
 
 		// Get the settings of the durrent display index. We want the app to go into
 		// fullscreen mode on the display that supports Independent Flip.
-		HMONITOR  currentMonitor = MonitorFromWindow((HWND)pApp->pWindow->handle.window, MONITOR_DEFAULTTOPRIMARY);
+		//HMONITOR  currentMonitor = MonitorFromWindow((HWND)pApp->pWindow->handle.window, MONITOR_DEFAULTTOPRIMARY);
+		HMONITOR  currentMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
 		MONITORINFOEX info;
 		info.cbSize = sizeof(MONITORINFOEX);
-		bool infoRead = GetMonitorInfo(currentMonitor, &info);
+		//bool infoRead = 
+		GetMonitorInfo(currentMonitor, &info);
 
-		pApp->mSettings.mWindowX = info.rcMonitor.left;
-		pApp->mSettings.mWindowY = info.rcMonitor.top;
+		if (pApp)
+		{
+			pApp->mSettings.mWindowX = info.rcMonitor.left;
+			pApp->mSettings.mWindowY = info.rcMonitor.top;
+		}
 
 		SetWindowPos(
 			hwnd, HWND_NOTOPMOST, info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right - info.rcMonitor.left,
@@ -1098,7 +1120,7 @@ int WindowsMain(int argc, char** argv, IApp* app)
 		// If window is minimized let other processes take over
 		if (gWindow->minimized)
 		{
-			Thread::Sleep(1);
+			theforge::Thread::Sleep(1);
 			continue;
 		}
 
