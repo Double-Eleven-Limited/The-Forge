@@ -323,6 +323,11 @@ static constexpr TinyImageFormat_DXGI_FORMAT util_get_dxgi_format(const DDS_PIXE
 
 			// No DXGI format maps to ISBITMASK(0x0f00,0x00f0,0x000f,0) aka D3DFMT_X4R4G4B4
 
+			if (ISBITMASK(0xff, 0xff00, 0, 0))
+			{
+				return TIF_DXGI_FORMAT_R8G8_UNORM;
+			}
+
 			// No 3:3:2, 3:3:2:8, or paletted DXGI formats aka D3DFMT_A8R3G3B2, D3DFMT_R3G3B2, D3DFMT_P8, D3DFMT_A8P8, etc.
 			break;
 		}
