@@ -3,6 +3,7 @@
 #if defined(_WINDOWS) && !defined(DURANGO)
 #include "nvapi.h"
 #define NVAPI
+#pragma comment(lib, "nvapi64")
 #else
 typedef enum NvAPI_Status
 {
