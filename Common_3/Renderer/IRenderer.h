@@ -1508,4 +1508,12 @@ API_INTERFACE int FORGE_CALLCONV getTextureDepth(Texture* pTexture);
 API_INTERFACE int FORGE_CALLCONV getTextureArraySize(Texture* pTexture);
 API_INTERFACE int FORGE_CALLCONV getTextureMipCount(Texture* pTexture);
 API_INTERFACE TinyImageFormat FORGE_CALLCONV getTextureFormat(Texture* pTexture);
+
+API_INTERFACE int FORGE_CALLCONV getBufferSize(Buffer* pBuffer);
+
+API_INTERFACE int FORGE_CALLCONV getRenderTargetWidth(RenderTarget* pRenderTarget);
+API_INTERFACE int FORGE_CALLCONV getRenderTargetHeight(RenderTarget* pRenderTarget);
+API_INTERFACE int FORGE_CALLCONV getRenderTargetArraySize(RenderTarget* pRenderTarget);
+API_INTERFACE TinyImageFormat FORGE_CALLCONV getRenderTargetFormat(RenderTarget* pRenderTarget);
+
 // clang-format on

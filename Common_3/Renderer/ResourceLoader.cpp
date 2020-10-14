@@ -3062,3 +3062,10 @@ int getTextureDepth(Texture* pTexture) { return pTexture->mDepth; }
 int getTextureArraySize(Texture* pTexture) { return pTexture->mArraySizeMinusOne + 1; }
 int getTextureMipCount(Texture* pTexture) { return pTexture->mMipLevels; }
 TinyImageFormat getTextureFormat(Texture* pTexture) { return (TinyImageFormat)pTexture->mFormat; }
+
+int getRenderTargetWidth(RenderTarget* pRenderTarget) { return pRenderTarget->mWidth; }
+int getRenderTargetHeight(RenderTarget* pRenderTarget) { return pRenderTarget->mHeight; }
+int getRenderTargetArraySize(RenderTarget* pRenderTarget) { return pRenderTarget->mArraySize; }
+TinyImageFormat getRenderTargetFormat(RenderTarget* pRenderTarget) { return pRenderTarget->mFormat; }
+
+int getBufferSize(Buffer* pBuffer) { return pBuffer->mSize; }
